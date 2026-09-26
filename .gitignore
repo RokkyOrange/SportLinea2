@@ -19,3 +19,9 @@ tmp_*.csx
 SportLinea.Admin/wwwroot/lib/lib/
 SportLinea.Admin/wwwroot/js/js/
 *Абрашина*
+*.apk
+антиплагиат.png
+преценденты.png
+.idea/
+*.iml
+SportLinea/

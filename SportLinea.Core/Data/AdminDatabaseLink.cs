@@ -1,15 +1,26 @@
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace SportLinea.Data;
 
 /// <summary>
 /// Поднимает админскую БД как окно на клиентскую через синонимы SQL Server.
 /// Реальные таблицы остаются в SportLineaDb.
+/// Если клиентской базы ещё нет (запущен только АРМ), она создаётся миграциями.
 /// </summary>
 public static class AdminDatabaseLink
 {
     public const string ClientDatabaseName = "SportLineaDb";
     public const string AdminDatabaseName = "SportLineaAdmin";
+
+    public static string ToClientConnectionString(string adminConnectionString)
+    {
+        var builder = new SqlConnectionStringBuilder(adminConnectionString)
+        {
+            InitialCatalog = ClientDatabaseName
+        };
+        return builder.ConnectionString;
+    }
 
     private static readonly string[] SharedTables =
     [
@@ -22,6 +33,13 @@ public static class AdminDatabaseLink
 
     public static async Task EnsureAsync(string adminConnectionString)
     {
+        var clientCs = ToClientConnectionString(adminConnectionString);
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseSqlServer(clientCs)
+            .Options;
+        await using (var ctx = new ApplicationDbContext(options))
+            await ctx.Database.MigrateAsync();
+
         var master = new SqlConnectionStringBuilder(adminConnectionString)
         {
             InitialCatalog = "master"
@@ -30,12 +48,6 @@ public static class AdminDatabaseLink
         await using (var conn = new SqlConnection(master.ConnectionString))
         {
             await conn.OpenAsync();
-
-            if (!await DatabaseExistsAsync(conn, ClientDatabaseName))
-            {
-                throw new InvalidOperationException(
-                    $"Сначала запустите клиентский сайт, чтобы создалась база {ClientDatabaseName}.");
-            }
 
             if (!await DatabaseExistsAsync(conn, AdminDatabaseName))
             {

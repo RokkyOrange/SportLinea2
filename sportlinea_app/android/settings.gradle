@@ -1,0 +1,29 @@
+pluginManagement {
+    def flutterSdkPath = {
+        def candidates = [
+            "C:\\flutter-sdk",
+            "C:\\Users\\90C5~1\\DOWNLO~1\\FLUTTE~1.2-S\\flutter"
+        ]
+        def found = candidates.find { dir ->
+            new File(dir, "packages/flutter_tools/gradle/src/main/groovy/native_plugin_loader.groovy").isFile()
+        }
+        assert found != null : "ASCII Flutter SDK path not found. Expected C:\\flutter-sdk junction."
+        return found
+    }()
+
+    includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+    id "com.android.application" version "8.7.2" apply false
+    id "org.jetbrains.kotlin.android" version "1.8.22" apply false
+}
+
+include ":app"
